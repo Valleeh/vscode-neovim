@@ -348,33 +348,37 @@ export class CursorManager
                 (kind === TextEditorSelectionChangeKind.Mouse && !selections[0].active.isEqual(selections[0].anchor)) ||
                 this.modeManager.isVisualMode
             ) {
-                if (kind !== TextEditorSelectionChangeKind.Mouse || !this.settings.mouseSelectionEnabled) {
+                if (kind !== TextEditorSelectionChangeKind.Mouse || this.settings.mouseSelectionEnabled) {
                     return;
                 } else {
-                    const grid = this.bufferManager.getGridIdForWinId(winId);
-                    this.logger.debug(`${LOG_PREFIX}: Processing multi-selection, gridId: ${grid}`);
                     const requests: [string, unknown[]][] = [];
-                    if (!this.modeManager.isVisualMode && grid) {
-                        // need to start visual mode from anchor char
-                        const firstPos = selections[0].anchor;
-                        const mouseClickPos = editorPositionToNeovimPosition(textEditor, firstPos);
-                        this.logger.debug(
-                            `${LOG_PREFIX}: Starting visual mode from: [${mouseClickPos[0]}, ${mouseClickPos[1]}]`,
-                        );
-                        requests.push(["nvim_win_set_cursor", [winId, mouseClickPos]]);
-                        requests.push(["nvim_input", ["v"]]);
-                    }
-                    const lastSelection = selections.slice(-1)[0];
-                    if (!lastSelection) {
-                        return;
-                    }
-                    const cursorPos = editorPositionToNeovimPosition(textEditor, lastSelection.active);
-                    this.logger.debug(
-                        `${LOG_PREFIX}: Updating cursor pos in neovim, winId: ${winId}, pos: [${cursorPos[0]}, ${cursorPos[1]}]`,
-                    );
-                    requests.push(["nvim_win_set_cursor", [winId, cursorPos]]);
+                    requests.push(["nvim_input", ["i"]]);
                     await callAtomic(this.client, requests, this.logger, LOG_PREFIX);
-                }
+                    return;
+                //     const grid = this.bufferManager.getGridIdForWinId(winId);
+                //     this.logger.debug(`${LOG_PREFIX}: Processing multi-selection, gridId: ${grid}`);
+                //     const requests: [string, unknown[]][] = [];
+                //     if (!this.modeManager.isVisualMode && grid) {
+                //         // need to start visual mode from anchor char
+                //         const firstPos = selections[0].anchor;
+                //         const mouseClickPos = editorPositionToNeovimPosition(textEditor, firstPos);
+                //         this.logger.debug(
+                //             `${LOG_PREFIX}: Starting visual mode from: [${mouseClickPos[0]}, ${mouseClickPos[1]}]`,
+                //         );
+                //         requests.push(["nvim_win_set_cursor", [winId, mouseClickPos]]);
+                //         requests.push(["nvim_input", ["v"]]);
+                //     }
+                //     const lastSelection = selections.slice(-1)[0];
+                //     if (!lastSelection) {
+                //         return;
+                //     }
+                //     const cursorPos = editorPositionToNeovimPosition(textEditor, lastSelection.active);
+                //     this.logger.debug(
+                //         `${LOG_PREFIX}: Updating cursor pos in neovim, winId: ${winId}, pos: [${cursorPos[0]}, ${cursorPos[1]}]`,
+                //     );
+                //     requests.push(["nvim_win_set_cursor", [winId, cursorPos]]);
+                //     await callAtomic(this.client, requests, this.logger, LOG_PREFIX);
+                 }
             } else {
                 const cursorPos = getNeovimCursorPosFromEditor(textEditor);
                 this.logger.debug(
